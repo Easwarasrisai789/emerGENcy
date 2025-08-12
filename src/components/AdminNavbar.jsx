@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const AdminNavbar = () => {
   return (
@@ -6,19 +7,29 @@ const AdminNavbar = () => {
       <h2 style={styles.logo}>Admin Panel</h2>
       <ul style={styles.navLinks}>
         <li>
-          <button style={styles.link} onClick={() => window.location.href = '/admin'}>
+          <Link style={styles.link} to="/admin">
             Dashboard
-          </button>
+          </Link>
         </li>
         <li>
-          <button style={styles.link} onClick={() => window.location.href = '/requests'}>
+          <Link style={styles.link} to="/requests">
             Requests
-          </button>
+          </Link>
         </li>
         <li>
-          <button style={styles.link} onClick={() => window.location.href = '/'}>
+          <Link style={styles.link} to="/accepted-requests">
+            Accepted Requests
+          </Link>
+        </li>
+        <li>
+          <Link style={styles.link} to="/AssignedVehicles">
+            Assigned Vehicles
+          </Link>
+        </li>
+        <li>
+          <Link style={styles.link} to="/">
             Logout
-          </button>
+          </Link>
         </li>
       </ul>
     </nav>
@@ -36,11 +47,11 @@ const styles = {
     position: 'sticky',
     top: 0,
     zIndex: 1000,
-    flexWrap: 'wrap'
+    flexWrap: 'wrap',
   },
   logo: {
     margin: 0,
-    fontSize: '20px'
+    fontSize: '20px',
   },
   navLinks: {
     listStyle: 'none',
@@ -48,9 +59,10 @@ const styles = {
     gap: '15px',
     margin: 0,
     padding: 0,
-    flexWrap: 'wrap'
+    flexWrap: 'wrap',
   },
   link: {
+    textDecoration: 'none',
     background: 'none',
     border: '1px solid white',
     borderRadius: '5px',
@@ -58,8 +70,8 @@ const styles = {
     fontWeight: 'bold',
     cursor: 'pointer',
     padding: '6px 12px',
-    fontSize: '14px'
-  }
+    fontSize: '14px',
+  },
 };
 
 export default AdminNavbar;

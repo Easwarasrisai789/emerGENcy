@@ -1,12 +1,13 @@
-// src/pages/RequestsPage.jsx
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase";
 import { collection, onSnapshot, doc, updateDoc } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
 
 const RequestsPage = () => {
   const [requests, setRequests] = useState([]);
   const [selected, setSelected] = useState(null);
+  const navigate = useNavigate();
 
   const handleCopy = (req) => {
     if (req.latitude && req.longitude) {
@@ -25,13 +26,11 @@ const RequestsPage = () => {
       const reqDocRef = doc(db, "emergencyRequests", reqId);
       await updateDoc(reqDocRef, { status: newStatus });
 
+      // Update local state
       setRequests((prev) =>
         prev.map((r) =>
           r.id === reqId
-            ? {
-                ...r,
-                status: newStatus,
-              }
+            ? { ...r, status: newStatus }
             : r
         )
       );
@@ -39,13 +38,17 @@ const RequestsPage = () => {
       if (selected?.id === reqId) {
         setSelected((prev) => ({ ...prev, status: newStatus }));
       }
+
+      // Redirect to accepted list if accepted
+      if (newStatus === "Accepted") {
+        navigate("/accepted-requests");
+      }
     } catch (error) {
       console.error("Error updating status:", error);
       alert("Failed to update status. Please try again.");
     }
   };
 
-  // Listener effect: runs once to get real-time requests
   useEffect(() => {
     const unsub = onSnapshot(
       collection(db, "emergencyRequests"),
@@ -62,18 +65,14 @@ const RequestsPage = () => {
             status: data.status || "Pending",
           };
         });
-
         setRequests(reqData);
       },
-      (error) => {
-        console.error("Error fetching requests:", error);
-      }
+      (error) => console.error("Error fetching requests:", error)
     );
 
     return () => unsub();
   }, []);
 
-  // Separate effect: set selected request only when requests change and no selected yet
   useEffect(() => {
     if (!selected && requests.length > 0) {
       setSelected(requests[0]);
@@ -83,28 +82,14 @@ const RequestsPage = () => {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <AdminNavbar />
-
       <div style={{ display: "flex", flex: 1, flexWrap: "wrap" }}>
         {/* Table Section */}
-        <div
-          style={{
-            flex: 1,
-            minWidth: "300px",
-            padding: "20px",
-            overflowX: "auto",
-          }}
-        >
+        <div style={{ flex: 1, minWidth: "300px", padding: "20px", overflowX: "auto" }}>
           <h2>Incoming Requests</h2>
           {requests.length === 0 ? (
             <p>No incoming requests.</p>
           ) : (
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                border: "1px solid #ddd",
-              }}
-            >
+            <table style={{ width: "100%", borderCollapse: "collapse", border: "1px solid #ddd" }}>
               <thead>
                 <tr>
                   <th>Name</th>
@@ -123,8 +108,7 @@ const RequestsPage = () => {
                     onClick={() => setSelected(req)}
                     style={{
                       cursor: "pointer",
-                      backgroundColor:
-                        selected?.id === req.id ? "#f0f0f0" : "transparent",
+                      backgroundColor: selected?.id === req.id ? "#f0f0f0" : "transparent",
                     }}
                   >
                     <td>{req.name}</td>
@@ -134,10 +118,7 @@ const RequestsPage = () => {
                     <td>{req.longitude ? req.longitude.toFixed(4) : "-"}</td>
                     <td>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCopy(req);
-                        }}
+                        onClick={(e) => { e.stopPropagation(); handleCopy(req); }}
                         style={{
                           padding: "6px 10px",
                           background: "#4CAF50",
@@ -153,55 +134,40 @@ const RequestsPage = () => {
                     <td>
                       <button
                         disabled={req.status === "Accepted"}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStatusUpdate(req.id, "Accepted");
-                        }}
+                        onClick={(e) => { e.stopPropagation(); handleStatusUpdate(req.id, "Accepted"); }}
                         style={{
                           padding: "6px 10px",
                           marginRight: "5px",
-                          background:
-                            req.status === "Accepted" ? "#8BC34A" : "#4CAF50",
+                          background: req.status === "Accepted" ? "#8BC34A" : "#4CAF50",
                           color: "#fff",
                           border: "none",
                           borderRadius: "4px",
-                          cursor:
-                            req.status === "Accepted" ? "default" : "pointer",
+                          cursor: req.status === "Accepted" ? "default" : "pointer",
                         }}
                       >
                         Accept
                       </button>
                       <button
                         disabled={req.status === "Rejected"}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStatusUpdate(req.id, "Rejected");
-                        }}
+                        onClick={(e) => { e.stopPropagation(); handleStatusUpdate(req.id, "Rejected"); }}
                         style={{
                           padding: "6px 10px",
-                          background:
-                            req.status === "Rejected" ? "#E57373" : "#F44336",
+                          background: req.status === "Rejected" ? "#E57373" : "#F44336",
                           color: "#fff",
                           border: "none",
                           borderRadius: "4px",
-                          cursor:
-                            req.status === "Rejected" ? "default" : "pointer",
+                          cursor: req.status === "Rejected" ? "default" : "pointer",
                         }}
                       >
                         Reject
                       </button>
-                      <div
-                        style={{
-                          marginTop: "5px",
-                          fontWeight: "bold",
-                          color:
-                            req.status === "Accepted"
-                              ? "#4CAF50"
-                              : req.status === "Rejected"
-                              ? "#F44336"
-                              : "black",
-                        }}
-                      >
+                      <div style={{
+                        marginTop: "5px",
+                        fontWeight: "bold",
+                        color:
+                          req.status === "Accepted" ? "#4CAF50" :
+                          req.status === "Rejected" ? "#F44336" : "black",
+                      }}>
                         {req.status}
                       </div>
                     </td>
