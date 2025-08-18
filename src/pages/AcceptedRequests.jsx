@@ -40,7 +40,7 @@ const AcceptedRequests = () => {
     return () => unsub();
   }, []);
 
-  // Filtering logic: First date range, then vehicle
+  // Filtering logic
   const filteredRequests = acceptedRequests
     .filter((req) => {
       if (!startDate && !endDate) return true;
@@ -63,7 +63,7 @@ const AcceptedRequests = () => {
     ...new Set(acceptedRequests.map((req) => req.vehicle || "Unknown")),
   ];
 
-  // Assign button handler
+  // Assign handler
   const handleAssign = async (id) => {
     const confirmAssign = window.confirm(
       "Are you sure you want to assign this vehicle?"
@@ -84,7 +84,7 @@ const AcceptedRequests = () => {
       <div style={{ padding: "20px" }}>
         <h2>Accepted Requests</h2>
 
-        {/* Date Range Filter */}
+        {/* Date Filter */}
         <div style={{ marginBottom: "15px" }}>
           <label style={{ fontWeight: "bold", marginRight: "5px" }}>
             Start Date:
@@ -147,7 +147,7 @@ const AcceptedRequests = () => {
                 <th style={thStyle}>Longitude</th>
                 <th style={thStyle}>Date & Time</th>
                 <th style={thStyle}>Map</th>
-                <th style={thStyle}>Assign</th>
+                <th style={thStyle}>Status</th>
               </tr>
             </thead>
             <tbody>
@@ -170,19 +170,22 @@ const AcceptedRequests = () => {
                     </a>
                   </td>
                   <td style={tdStyle}>
-                    <button
-                      onClick={() => handleAssign(req.id)}
-                      style={{
-                        padding: "5px 10px",
-                        background: "#4CAF50",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Assign
-                    </button>
+                    {req.assignedVehicle === "Assigned" ? (
+                      <span style={{ color: "green", fontSize: "20px" }}>✅</span>
+                    ) : (
+                      <button
+                        onClick={() => handleAssign(req.id)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          fontSize: "20px",
+                          color: "red",
+                        }}
+                      >
+                        ❌
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
