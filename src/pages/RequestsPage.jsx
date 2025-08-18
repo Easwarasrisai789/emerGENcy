@@ -21,6 +21,15 @@ const RequestsPage = () => {
     }
   };
 
+  const handleShare = (req) => {
+    if (req.latitude && req.longitude) {
+      const osmLink = `https://www.openstreetmap.org/?mlat=${req.latitude}&mlon=${req.longitude}#map=18/${req.latitude}/${req.longitude}`;
+      window.open(osmLink, "_blank");
+    } else {
+      alert("No location data to share.");
+    }
+  };
+
   const handleStatusUpdate = async (reqId, newStatus) => {
     try {
       const reqDocRef = doc(db, "emergencyRequests", reqId);
@@ -29,9 +38,7 @@ const RequestsPage = () => {
       // Update local state
       setRequests((prev) =>
         prev.map((r) =>
-          r.id === reqId
-            ? { ...r, status: newStatus }
-            : r
+          r.id === reqId ? { ...r, status: newStatus } : r
         )
       );
 
@@ -126,9 +133,23 @@ const RequestsPage = () => {
                           border: "none",
                           borderRadius: "4px",
                           cursor: "pointer",
+                          marginRight: "5px",
                         }}
                       >
                         Copy
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleShare(req); }}
+                        style={{
+                          padding: "6px 10px",
+                          background: "#2196F3",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Share
                       </button>
                     </td>
                     <td>
