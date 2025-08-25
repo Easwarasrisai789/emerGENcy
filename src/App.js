@@ -8,6 +8,7 @@ import Contact from './pages/Contact';
 import RequestsPage from './pages/RequestsPage';
 import AcceptedRequests from "./pages/AcceptedRequests";
 import AssignedVehicles from './pages/AssignedVehicles';
+import AnimatedLogo from './pages/AnimatedLogo';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/requests" element={<RequestsPage/>}/>
         <Route path="/accepted-requests" element={<AcceptedRequests />} />
         <Route path="/AssignedVehicles" element={<AssignedVehicles/>}/>
+        <Route path="/AnimatedLogo" element={<AnimatedLogo/>}/>
 
       </Routes>
     </Router>

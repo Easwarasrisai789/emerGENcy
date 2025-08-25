@@ -13,49 +13,45 @@ const Navbar = () => {
   );
 };
 
-// Responsive styles using JS media queries
+// Styles matching your screenshot design
 const styles = {
   navbar: {
     display: 'flex',
-    flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#007BFF',
+    background: 'linear-gradient(to right, #2c3e50, #34495e)', // dark navy gradient
     color: '#fff',
     padding: '15px 5%',
     position: 'sticky',
     top: 0,
     zIndex: 1000,
     width: '100%',
-    boxSizing: 'border-box'
+    boxSizing: 'border-box',
   },
   logo: {
     margin: 0,
     fontSize: '1.5rem',
-    flex: '1 1 100%',
-    textAlign: 'center'
+    fontWeight: 'bold',
+    color: '#fff',
   },
   navLinks: {
     listStyle: 'none',
     display: 'flex',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
     gap: '15px',
-    margin: '10px 0 0',
+    margin: 0,
     padding: 0,
-    width: '100%'
   },
   link: {
     background: 'none',
     border: '2px solid white',
-    borderRadius: '5px',
+    borderRadius: '8px',
     color: '#fff',
     fontWeight: 'bold',
     cursor: 'pointer',
     fontSize: '1rem',
-    padding: '8px 12px',
-    transition: 'all 0.3s ease'
-  }
+    padding: '8px 16px',
+    transition: 'all 0.3s ease',
+  },
 };
 
 export default Navbar;

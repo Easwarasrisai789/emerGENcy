@@ -18,7 +18,10 @@ function AdminLogin() {
     setResetMessage('');
 
     try {
+      // Login with Firebase
       await signInWithEmailAndPassword(auth, email, password);
+
+      // Always navigate to admin dashboard after login
       navigate('/admin');
     } catch (err) {
       setError('Invalid email or password');
@@ -45,8 +48,9 @@ function AdminLogin() {
     <>
       <Navbar />
       <div style={styles.container}>
-        <h2 style={styles.title}>Admin Login</h2>
         <form onSubmit={handleLogin} style={styles.form}>
+          <h2 style={styles.title}>Login</h2>
+
           <label style={styles.label}>Email:</label>
           <input
             type="email"
@@ -54,6 +58,7 @@ function AdminLogin() {
             onChange={(e) => setEmail(e.target.value)}
             required
             style={styles.input}
+            placeholder="Enter Email"
           />
 
           <label style={styles.label}>Password:</label>
@@ -63,6 +68,7 @@ function AdminLogin() {
             onChange={(e) => setPassword(e.target.value)}
             required
             style={styles.input}
+            placeholder="Enter Password"
           />
 
           {error && <p style={styles.error}>{error}</p>}
@@ -91,43 +97,54 @@ const styles = {
     minHeight: '100vh',
     fontFamily: 'Arial, sans-serif'
   },
-  title: {
-    marginBottom: '20px',
-    fontSize: '24px'
-  },
   form: {
-    backgroundColor: '#fff',
+    backgroundColor: '#2c2c2c', // dark gray box
     padding: '30px',
-    borderRadius: '8px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+    borderRadius: '12px',
+    boxShadow: '0 8px 20px rgba(0,0,0,0.3)',
     display: 'flex',
     flexDirection: 'column',
     gap: '15px',
-    width: '300px'
+    width: '360px',
+    color: 'white'
+  },
+  title: {
+    marginBottom: '10px',
+    fontSize: '22px',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: 'white'
   },
   label: {
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'left'
   },
   input: {
-    padding: '10px',
-    fontSize: '16px'
+    padding: '12px',
+    fontSize: '16px',
+    border: '1px solid #444',
+    borderRadius: '8px',
+    backgroundColor: '#3a3a3a',
+    color: 'white'
   },
   button: {
-    padding: '10px',
+    padding: '12px',
     fontSize: '16px',
-    backgroundColor: '#007BFF',
+    backgroundColor: '#ff4444',
     color: '#fff',
     border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer'
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontWeight: 'bold'
   },
   error: {
-    color: 'red',
+    color: '#ff4444',
     fontSize: '14px',
     margin: 0
   },
   success: {
-    color: 'green',
+    color: '#00ff00',
     fontSize: '14px',
     margin: 0
   },
@@ -138,8 +155,8 @@ const styles = {
   linkBtn: {
     background: 'none',
     border: 'none',
-    color: '#007BFF',
-    textDecoration: 'underline',
+    color: '#aaa',
+    textDecoration: 'none',
     cursor: 'pointer',
     fontSize: '14px'
   }
