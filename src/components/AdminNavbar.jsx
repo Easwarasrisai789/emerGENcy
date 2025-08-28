@@ -21,11 +21,7 @@ const AdminNavbar = () => {
             Accepted Requests
           </Link>
         </li>
-        <li>
-          <Link style={styles.link} to="/AssignedVehicles">
-            Assigned Vehicles
-          </Link>
-        </li>
+       
         <li>
           <Link style={styles.link} to="/">
             Logout

@@ -29,66 +29,59 @@ export default function AcceptedRequests() {
   const [requests, setRequests] = useState([]);
   const [vehicles, setVehicles] = useState(defaultVehicles);
 
+  // ✅ Fetch accepted/assigned requests in realtime
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "requests"), (snapshot) => {
       const reqs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setRequests(reqs.filter((r) => r.status === "accepted"));
+      setRequests(
+        reqs.filter((r) => r.status === "accepted" || r.status === "assigned")
+      );
     });
     return () => unsub();
   }, []);
 
-  // ✅ Assign vehicle logic
+  // ✅ Assign a vehicle
   const assignVehicle = async (request) => {
-    const type = request.vehicleType?.toLowerCase(); // requested type
+    const type = request.vehicleType?.toLowerCase();
     if (!type || !vehicles[type]) {
       alert("Invalid vehicle type requested");
       return;
     }
 
-    // find next available vehicle
+    // Find first available vehicle of this type
     const availableVehicle = vehicles[type].find((v) => v.available);
-
     if (!availableVehicle) {
       alert(`No ${type} available right now`);
       return;
     }
 
-    // mark vehicle as in use
-    const updatedVehicles = {
-      ...vehicles,
-      [type]: vehicles[type].map((v) =>
+    // Mark this vehicle as unavailable in local state
+    setVehicles((prev) => ({
+      ...prev,
+      [type]: prev[type].map((v) =>
         v.id === availableVehicle.id ? { ...v, available: false } : v
       ),
-    };
-    setVehicles(updatedVehicles);
+    }));
 
-    // ✅ update request in Firebase with details
+    // Update Firestore with assignment
     const requestRef = doc(db, "requests", request.id);
     await updateDoc(requestRef, {
-      assignedVehicle: availableVehicle.id, // e.g., Ambulance-1
+      assignedVehicle: availableVehicle.id,
       assignedUser: request.name,
       assignedVehicleType: request.vehicleType,
       vehicleAssignedAt: new Date().toISOString(),
       status: "assigned",
     });
 
-    // ✅ release vehicle after 2 hours
-    setTimeout(async () => {
+    // ✅ Release vehicle after 2 hours (only locally, don't clear Firestore)
+    setTimeout(() => {
       setVehicles((prev) => ({
         ...prev,
         [type]: prev[type].map((v) =>
           v.id === availableVehicle.id ? { ...v, available: true } : v
         ),
       }));
-
-      // clear assignment in firebase
-      await updateDoc(requestRef, {
-        assignedVehicle: null,
-        assignedUser: null,
-        assignedVehicleType: null,
-        status: "accepted", // keep request accepted but free the vehicle
-      });
-    }, 2 * 60 * 60 * 1000); // 2 hours
+    }, 2 * 60 * 60 * 1000);
   };
 
   return (
@@ -103,27 +96,47 @@ export default function AcceptedRequests() {
           {requests.map((req) => (
             <li
               key={req.id}
-              className="p-4 border rounded-lg shadow flex justify-between items-center"
+              className="p-4 border rounded-lg shadow flex justify-between items-center bg-white"
             >
               <div>
                 <p>
                   <strong>Name:</strong> {req.name}
                 </p>
                 <p>
-                  <strong>Vehicle Needed:</strong> {req.vehicleType}
+                  <strong>Vehicle Needed:</strong>{" "}
+                  {req.vehicleType || "N/A"}
                 </p>
                 <p>
                   <strong>Assigned Vehicle:</strong>{" "}
-                  {req.assignedVehicle || "Not Assigned"}
+                  {req.assignedVehicle || (
+                    <span className="text-gray-500">Not Assigned</span>
+                  )}
                 </p>
                 {req.assignedUser && (
                   <p>
                     <strong>Assigned To:</strong> {req.assignedUser}
                   </p>
                 )}
+                <p>
+                  <strong>Status:</strong>{" "}
+                  <span
+                    className={`px-2 py-1 rounded text-sm ${
+                      req.status === "assigned"
+                        ? "bg-green-200 text-green-800"
+                        : "bg-yellow-200 text-yellow-800"
+                    }`}
+                  >
+                    {req.status}
+                  </span>
+                </p>
               </div>
+
               <button
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+                className={`px-4 py-2 rounded-lg ${
+                  req.assignedVehicle
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"
+                } text-white`}
                 onClick={() => assignVehicle(req)}
                 disabled={!!req.assignedVehicle}
               >
