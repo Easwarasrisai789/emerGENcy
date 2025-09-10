@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { db } from "../firebase";
+import { db, authReady } from "../firebase";
 import {
   collection,
   query,
@@ -17,27 +17,35 @@ const AcceptedRequests = () => {
   const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
-    const q = query(
-      collection(db, "emergencyRequests"),
-      where("status", "==", "Accepted")
-    );
+    let unsubscribe = null;
+    let active = true;
+    authReady.then(() => {
+      if (!active) return;
+      const q = query(
+        collection(db, "emergencyRequests"),
+        where("status", "==", "Accepted")
+      );
 
-    const unsub = onSnapshot(q, (snapshot) => {
-      const reqData = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          timestampObj: data.timestamp || null,
-          dateTime: data.timestamp
-            ? new Date(data.timestamp.seconds * 1000).toLocaleString()
-            : "N/A",
-        };
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        const reqData = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            timestampObj: data.timestamp || null,
+            dateTime: data.timestamp
+              ? new Date(data.timestamp.seconds * 1000).toLocaleString()
+              : "N/A",
+          };
+        });
+        setAcceptedRequests(reqData);
       });
-      setAcceptedRequests(reqData);
     });
 
-    return () => unsub();
+    return () => {
+      active = false;
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   // Filtering logic
@@ -79,7 +87,7 @@ const AcceptedRequests = () => {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", marginLeft: 220 }}>
       <AdminNavbar />
       <div style={{ padding: "20px" }}>
         <h2>Accepted Requests</h2>

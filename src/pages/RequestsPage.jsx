@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { db } from "../firebase";
-import { collection, onSnapshot, doc, updateDoc } from "firebase/firestore";
+import { db, authReady } from "../firebase";
+import { collection, onSnapshot, doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import AdminNavbar from "../components/AdminNavbar";
 
@@ -33,7 +33,31 @@ const RequestsPage = () => {
   const handleStatusUpdate = async (reqId, newStatus) => {
     try {
       const reqDocRef = doc(db, "emergencyRequests", reqId);
-      await updateDoc(reqDocRef, { status: newStatus });
+      // If accepting, auto-assign a default vehicle based on situation/vehicle usage
+      let extraUpdate = {};
+      if (newStatus === "Accepted") {
+        const current = requests.find((r) => r.id === reqId);
+        const typeSrc = (current?.situation || current?.vehicle || "").toLowerCase();
+        let vehicleType = "ambulance";
+        if (typeSrc.includes("fire")) vehicleType = "fireengine";
+        else if (typeSrc.includes("police") || typeSrc.includes("crime")) vehicleType = "policevan";
+
+        const poolSize = 10;
+        const slot = ((Date.now() / 60000) | 0) % poolSize; // rotate across 10 slots per minute
+        const assignedVehicle =
+          vehicleType === "ambulance"
+            ? `Ambulance-${slot + 1}`
+            : vehicleType === "fireengine"
+            ? `FireEngine-${slot + 1}`
+            : `PoliceVan-${slot + 1}`;
+
+        extraUpdate = {
+          assignedVehicle,
+          assignedVehicleType: vehicleType,
+          vehicleAssignedAt: serverTimestamp(),
+        };
+      }
+      await updateDoc(reqDocRef, { status: newStatus, ...extraUpdate });
 
       // Update local state
       setRequests((prev) =>
@@ -47,9 +71,7 @@ const RequestsPage = () => {
       }
 
       // Redirect to accepted list if accepted
-      if (newStatus === "Accepted") {
-        navigate("/accepted-requests");
-      }
+      if (newStatus === "Accepted") navigate("/AssignedVehicles");
     } catch (error) {
       console.error("Error updating status:", error);
       alert("Failed to update status. Please try again.");
@@ -57,27 +79,35 @@ const RequestsPage = () => {
   };
 
   useEffect(() => {
-    const unsub = onSnapshot(
-      collection(db, "emergencyRequests"),
-      (snapshot) => {
-        const reqData = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            name: data.name || "",
-            phone: data.phone || "",
-            situation: data.situation || data.vehicle || "",
-            latitude: data.latitude || data.location?.latitude || null,
-            longitude: data.longitude || data.location?.longitude || null,
-            status: data.status || "Pending",
-          };
-        });
-        setRequests(reqData);
-      },
-      (error) => console.error("Error fetching requests:", error)
-    );
+    let unsubscribe = null;
+    let active = true;
+    authReady.then(() => {
+      if (!active) return;
+      unsubscribe = onSnapshot(
+        collection(db, "emergencyRequests"),
+        (snapshot) => {
+          const reqData = snapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              name: data.name || "",
+              phone: data.phone || "",
+              situation: data.situation || data.vehicle || "",
+              latitude: data.latitude || data.location?.latitude || null,
+              longitude: data.longitude || data.location?.longitude || null,
+              status: data.status || "Pending",
+            };
+          });
+          setRequests(reqData);
+        },
+        (error) => console.error("Error fetching requests:", error)
+      );
+    });
 
-    return () => unsub();
+    return () => {
+      active = false;
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -87,7 +117,7 @@ const RequestsPage = () => {
   }, [requests, selected]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", marginLeft: 220 }}>
       <AdminNavbar />
       <div style={{ display: "flex", flex: 1, flexWrap: "wrap" }}>
         {/* Table Section */}

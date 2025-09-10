@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { db } from "../firebase";
+import { db, authReady } from "../firebase";
 import { collection, onSnapshot } from "firebase/firestore";
 import AdminNavbar from "../components/AdminNavbar";
 import { Bar, Pie } from "react-chartjs-2";
@@ -11,15 +11,20 @@ function Admin() {
 
   // ✅ Fetch Firestore data
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, "emergencyRequests"), (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        timestamp: doc.data().timestamp ? doc.data().timestamp.toDate() : null,
-      }));
-      setRequests(data);
+    let unsubscribe = null;
+    let active = true;
+    authReady.then(() => {
+      if (!active) return;
+      unsubscribe = onSnapshot(collection(db, "emergencyRequests"), (snapshot) => {
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          timestamp: doc.data().timestamp ? doc.data().timestamp.toDate() : null,
+        }));
+        setRequests(data);
+      });
     });
-    return () => unsub();
+    return () => { active = false; if (unsubscribe) unsubscribe(); };
   }, []);
 
   const totalEmergencies = requests.length;
@@ -77,7 +82,7 @@ function Admin() {
   return (
     <>
       <AdminNavbar />
-      <div style={styles.container}>
+      <div style={{ ...styles.container, marginLeft: 220 }}>
         <h1 style={styles.title}>📊 Admin Dashboard - Live Analysis</h1>
 
         {/* KPIs */}
